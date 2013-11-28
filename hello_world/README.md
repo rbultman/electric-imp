@@ -10,10 +10,10 @@ The device code does the following things:
 - It periodically prints "Hello World" to uart1289 (pins 8 and 9 on the imp-001 card).
 - It saves the last character received on the UART.
 - It sends the last character received to the cloud agent when the character is received.
-- It sends the last character received to the cloud agent when request.
+- It sends the last character received to the cloud agent when requested.
 
 The agent code does the following things:
-- It stores the last character send from the device.
+- It stores the last character sent from the device.
 - It handles a URI request to / which returns the last character received.
 - It handles a URI reuqest to /dynamic.  This will cause a round-trip read to the 
 device to return the last character received as stored on the device.
@@ -24,7 +24,7 @@ the cloud.
 
 ### To Use
 The imp-001 and April development board were used in these examples.  You will also
-need an USB-to-UART cable so you can communicate with the Imp from a terminal program
+need a USB-to-UART cable so you can communicate with the Imp from a terminal program
 like kermit or PuTTY.  Note that the Imp is 3.3V, so make sure that your cable is 3.3V
 and not 5V.  I used the ttl-232r-3v3 availale from FTDI, although other cables are
 available from vendors such as SparkFun and Adafruit.  You will need to use the 
