@@ -2,7 +2,7 @@
 
 This hello world application illustrates communicating with a host device via 
 a UART, communication between the device and cloud agent, and communication
-between an web client and the cloud agent.  It also shows how a Squirrel table
+between a web client and the cloud agent.  It also shows how a Squirrel table
 can be used to route URL's to handlers.
 
 The device code does the following things:
