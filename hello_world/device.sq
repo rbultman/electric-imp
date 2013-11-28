@@ -1,0 +1,51 @@
+imp.configure("UART Hello World", [], []);
+
+// A variable for storing the last key pressed
+local lastKey = "<none>"
+
+// callback for data received on the UART
+function uartDataAvailable() {
+    // try to read a byte from the UART
+    local b = myUart.read();
+    // got a byte?
+    if (b != -1) {
+        // yes, echo back the pressed key plus other text
+        myUart.write("Serial input: ");
+        myUart.write(b);
+        myUart.write("\r\n");
+        // send the key pressed to the cloud agent
+        agent.send("keyPressed", b);
+        // store the last key pressed
+        lastKey = b;
+    }
+}
+
+// A port used to communicate with a host PC
+myUart <- hardware.uart1289;
+// configure uart
+myUart.configure(115200,8,PARITY_NONE,1,NO_CTSRTS, uartDataAvailable);
+
+// define a periodic function that prints to the UART periodically
+function periodic() {
+    myUart.write("Hello, World! " + FormatTime() + "\r\n");
+    imp.wakeup(5, periodic);
+}
+
+agent.on("getKey", function(id) {
+    agent.send("keyReturn", {key=lastKey, id=id});
+});
+
+// print some interesting info
+myUart.write("Hardware ID: " + hardware.getdeviceid() + "\r\n");
+server.log("Imp active and ready for duty.\r\n");
+
+// pretty print the time to a string
+function FormatTime() {
+    local t = date(time(), 'u');
+    return format("%02d:%02d:%02d", t.hour, t.min, t.sec) + " GMT";
+}
+myUart.write("The current time is " + FormatTime() + "\r\n");
+
+// start the periodic ticker
+periodic();
+

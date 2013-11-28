@@ -1,0 +1,76 @@
+server.log("Agent URL: " + http.agenturl() + "\r\n");
+
+// define a local variable to hold the last key pressed
+local keyPressed = "<none>";
+
+// A table to support read-thru to the device
+local readThruTable = {};
+// An id to be used with read-thru
+local requestId = 0;
+
+// handle access to /
+function handleURI_root(request, response) {
+    // send a response back to whoever made the request
+    response.send(200, "Last Key Pressed: " + keyPressed);
+}
+
+// handle access to /dynamic
+function handleURI_dynamic(httpReq, httpResp) {
+    // create a new entry in the read-thru table
+    // Store the requestId and http request and response objects
+    requestId = requestId + 1;
+    readThruTable[requestId] <- {request=httpReq, response=httpResp};
+    
+    // request the info from the device
+    // the requestId will be used when the response is availble
+    // probably should create a timer and callback too to clear
+    // the entry from the table in case the return did not complete
+    device.send("getKey", requestId);
+}
+// handle the response from the device
+device.on("keyReturn", function(rtn) {
+    // See if the id is in the table
+    if (rtn.id in readThruTable) {
+        // return the response to the web client using the response object stored in the table
+        readThruTable[rtn.id].response.send(200, "Last Key Pressed: " + rtn.key);
+        // delete item from table
+        delete readThruTable[rtn.id];
+    } else {
+        server.log("Error handling keyReturn: no id " + rtn.id + " in read thru table.");
+    }
+});
+
+// define a URL routing table
+local router = {
+    ["/"] = handleURI_root,
+    ["/dynamic"] = handleURI_dynamic
+}
+
+function requestHandler(request, response) {
+    server.log("HTTP request received.");
+    server.log("Method : " + request.method);
+    server.log("Path   : " + request.path);
+    server.log("Body   : " + request.body);
+
+    // see if we have a path for the request
+    if (request.path in router) {
+        // yes, route the request
+        server.log("Routing to path " + request.path);
+        router[request.path](request, response);
+    } else {
+        // no, return an error
+        server.log("ERROR: path not found: " + request.path);
+        response.send(404, "Path not found: " + request.path);
+    }
+}
+
+// define a handled for the keyPressed message from the device
+device.on("keyPressed", function(key) {
+    server.log("Got a key press: " + key);
+    // store the pressed key
+    keyPressed = key;
+});
+ 
+// your agent code should only ever have ONE http.onrequest call.
+http.onrequest(requestHandler);
+
